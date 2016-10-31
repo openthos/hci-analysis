@@ -9,7 +9,7 @@
 
 ## 当前开发人员
 ### 20161101-20161130
-- 李兵 董鹏 曾非非 周怡洁 曹永韧 刘晓旭
+- 陈刚 李兵 王之旭 董鹏 曾非非 周怡洁 曹永韧 刘晓旭
 
 ### bug fix/feature分工
 - [HCI问题列表](https://github.com/openthos/community-analysis/blob/master/painful_points_of_OTO_before_20161024.md)
