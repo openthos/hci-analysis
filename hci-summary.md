@@ -14,7 +14,7 @@
 ### bug fix/feature分工
 - [HCI问题列表](https://github.com/openthos/community-analysis/blob/master/painful_points_of_OTO_before_20161024.md)
 
-TBD：每人的bug/feature id，完成时间点 
+TBD：每人的bug/feature id，完成时间点</br>
 第一周 （20161101 － 20161104）：
 
 1、陈刚：20：特征：android studio 移植 到openthos上。
