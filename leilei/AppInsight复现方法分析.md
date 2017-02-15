@@ -1,9 +1,6 @@
 ## AppInsight复现方法分析
-### 一、复现方法分析
-1. **关键思想**：匹配代码位置，然后插入或操作代码字节码重写器会在Android应用的全部Java字节码上运行，执行少数几个简单的转换，产生大量发生过重写的代码位置。
-1. **检测粒度**：框架调用和回调层，即检测应用如何同Android框架交互以及框架反过来如何调用应用。
 
-### 二、AppInsight论文关键点截取：
+### 一、AppInsight论文关键点摘要：
 1. **插桩位置**：interposing on event handlers.
 
 1. **性能分析目标**：
@@ -90,15 +87,11 @@
 
      1. **thread　synchronization points (e.g., through Wait calls) and their　causal relationship; ——Capturing Thread Synchronization**
 
-        线程同步方法？？？
-
         **分析**：Silverlight provides a set of methods for thread synchronization.
 
         **方法**：log calls to these functions and the identities of semaphore objects　they use. These object ids can be used to determine the causal relationship between synchronization calls. Waiting on multiple objects, and thread join calls are handled similarly.
 
      1. **when the UI was updated; 　——Capturing UI updates**
-
-        没有UI更新事件，只有方法
 
         **分析**：The Silverlight framework generates a special LayoutUpdated event whenever the app finishes updating the UI.
 
@@ -118,4 +111,56 @@
 
  1. **结果**：
    * **web-based interface** provides the developers with information on the critical path through their code for every user transaction.
-    * **critical paths** for user transactions exception paths when apps fail during a transaction.
+    * **critical paths for user transactions exception paths** when apps fail during a transaction.
+
+### 二、复现方法分析
+1. **关键思想**：匹配代码位置，然后插入或重写代码
+1. **检测粒度**：框架调用和回调层，即检测应用如何同Android框架交互以及框架反过来如何调用应用。
+1. **目标**：以最小的开销捕捉必要的信息来构建用户事务的执行轨迹，并且识别关键路径（先不考虑异常路径）
+1. **需要捕捉的数据**：
+ 1. **when the user manipulates the UI;——Capturing UI Manipulation events**
+
+    当用户与UI交互时，android framework 给在前台运行的app的UI线程发送几个UI输入事件，其中第一个事件就是用户开始操作UI的事件，最后一个事件就是用户结束操作UI的事件。
+
+    http://blog.csdn.net/ddna/article/details/5451722
+
+    https://zhidao.baidu.com/question/560651725675055844.html　　　　　　　　
+
+    onClick被触发的基本时序的Log:
+
+    `04-05 05:57:47.123: DEBUG/TSActivity(209): onTouch ACTION_DOWN`
+
+    `04-05 05:57:47.263: DEBUG/TSActivity(209): onTouch ACTION_UP`
+
+    `04-05 05:57:47.323: DEBUG/TSActivity(209): onClick`
+
+    可以看出是按ACTION_DOWN -> ACTION_UP -> onClick的次序发生的。
+
+    添加ACTION_DOWN和ACTION_UP的handler打印log，获取时间。
+
+ 1. **when the app code executes on various threads (i.e.,start and end of horizontal line segments);——Capturing thread execution**
+
+    找到所有的_回调方法_，为每个方法调用唯一标号，在它的开始和结束处打印log，获取时间。
+
+ 1. **causality between asynchronous calls and callbacks; ——Matching async calls to their callbacks**
+
+    1. 找到所有的_系统异步调用方法_（app代码中使用的系统异步调用方法），为每个方法唯一标号
+
+    1. 找到系统异步调用方法对应的回调方法的开始时间（和结束时间）
+
+    1. 重写回调方法来detour
+
+ 1. **thread synchronization points (e.g., through Wait calls) and their causal relationship; ——Capturing Thread Synchronization**
+
+    线程同步方法
+
+ 1. **when the UI was updated; 　——Capturing UI updates**   
+
+    UI更新不是事件而是方法
+
+1. **添加两个类库完成代码插入和重写**：
+
+ * The Detour library:输出一系列的detour方法，帮助将回调函数执行归因于触发它们的异步调用点，
+ * The Logger library:输出一系列log方法和事件处理handlers 
+
+
